@@ -4,9 +4,15 @@ import urllib.parse
 import re
 import sys
 
+current_page_count = 0
+max_pages = 0
+
 def main():
+    global max_pages
     argv = sys.argv[1:]
     user = argv[0]
+    if len(argv) == 2:
+        max_pages = int(argv[1])
     pull_feed_images(user)
 
 
@@ -41,6 +47,12 @@ def get_next_page(query_hash : str, user_id : str, cursor_token : str):
     cursor_token = data['page_info']['end_cursor']
     has_next_page = data['page_info']['has_next_page']
     download(data['edges'])
+    global max_pages, current_page_count
+    current_page_count += 1
+    if current_page_count >= max_pages:
+        print("* Reached max page count, stopping...")
+        sys.exit(0)
+
     if has_next_page:
         get_next_page(query_hash, user_id, cursor_token)
 

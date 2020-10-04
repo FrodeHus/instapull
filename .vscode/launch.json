@@ -9,7 +9,7 @@
             "type": "python",
             "request": "launch",
             "module": "instapull",
-            "args": ["frodehus"]
+            "args": ["frodehus", "2"]
         }
     ]
 }
