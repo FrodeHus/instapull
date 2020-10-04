@@ -1,6 +1,7 @@
 import requests
 import json
 import urllib.parse
+import re
 import sys
 
 def main():
@@ -25,18 +26,23 @@ def pull_feed_images(user : str):
     download(edges)
 
     if has_next_page:
-        get_next_page(user_id, cursor_token)
+        query_hash = retrieve_query_hash()
+        get_next_page(query_hash, user_id, cursor_token)
 
-def get_next_page(user_id : str, cursor_token : str):
+def get_next_page(query_hash : str, user_id : str, cursor_token : str):
     urlparams = f'{{"id":"{user_id}","first":12,"after":"{cursor_token}"}}'
-    url = "https://www.instagram.com/graphql/query/?query_hash=56a7068fea504063273cc2120ffd54f3&variables=" + urllib.parse.quote(urlparams)
+    url = f"https://www.instagram.com/graphql/query/?query_hash={query_hash}&variables=" + urllib.parse.quote(urlparams)
     response = requests.get(url)
+    if response.status_code != 200:
+        print(f"- Failed retrieving next page: {response.reason}")
+        sys.exit(1)
+
     data = response.json()['data']['user']['edge_owner_to_timeline_media']
     cursor_token = data['page_info']['end_cursor']
     has_next_page = data['page_info']['has_next_page']
     download(data['edges'])
     if has_next_page:
-        get_next_page(user_id, cursor_token)
+        get_next_page(query_hash, user_id, cursor_token)
 
 def download(media_data : dict):
     for edge in media_data:
@@ -49,7 +55,17 @@ def download_file(url : str):
     response = requests.get(url)
     with open(filename, 'wb') as file:
         file.write(response.content)
-        
+
+def retrieve_query_hash():
+    response = requests.get("https://www.instagram.com")
+    html = response.text
+    scripts = re.findall(r"static\/bundles\/.+\/Consumer\.js\/.+\.js", html)
+    response = requests.get(f"https://www.instagram.com/{scripts[0]}")
+    js = response.text
+    js = js[js.index('profilePosts.byUserId.get'):]
+    match = re.findall(r"([a-fA-F\d]{32})", js)
+    return match[0]
+
 def get_filename(url : str):
     segments = url.split('/')
     filename = segments[-1]
