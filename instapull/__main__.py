@@ -49,7 +49,7 @@ def get_next_page(query_hash : str, user_id : str, cursor_token : str):
     download(data['edges'])
     global max_pages, current_page_count
     current_page_count += 1
-    if current_page_count >= max_pages:
+    if max_pages != 0 and current_page_count >= max_pages:
         print("* Reached max page count, stopping...")
         sys.exit(0)
 
