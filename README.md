@@ -10,4 +10,16 @@ from package: `pip3 install instapull`
 
 ## Usage
 
-`instapull <instagram username>`
+```bash
+usage: instapull [options] instagram-user
+
+Pull images from a Instagram feed
+
+positional arguments:
+  instagram_user        User name of the Instagram feed to pull images from
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -m MAX_PAGES, --max-pages MAX_PAGES
+                        Pull a maximum number of pages (12 images per page)
+                        ```
