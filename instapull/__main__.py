@@ -28,6 +28,9 @@ parser.add_argument(
     type=int,
     help="Pull a maximum number of pages (12 images per page)",
 )
+
+parser.add_argument("-p", "--page-size", type=int, action="store", help="Set the page size for each download pass (defaults to 12)")
+
 args = parser.parse_args()
 
 
@@ -63,7 +66,12 @@ def pull_feed_images(user: str):
 
 
 def get_next_page(query_hash: str, user_id: str, cursor_token: str):
-    urlparams = f'{{"id":"{user_id}","first":12,"after":"{cursor_token}"}}'
+    global args
+    page_size = 12
+    if args.page_size:
+        page_size = args.page_size
+        
+    urlparams = f'{{"id":"{user_id}","first":{page_size},"after":"{cursor_token}"}}'
     url = (
         f"https://www.instagram.com/graphql/query/?query_hash={query_hash}&variables="
         + urllib.parse.quote(urlparams)
