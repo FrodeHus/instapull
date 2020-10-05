@@ -34,7 +34,7 @@ args = parser.parse_args()
 def main():
     global max_pages, args
     user = args.instagram_user
-    if "max_pages" in args:
+    if "max_pages" in args and args.max_pages:
         max_pages = args.max_pages
 
     pull_feed_images(user)
