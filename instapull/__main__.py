@@ -29,6 +29,9 @@ parser.add_argument(
     help="Set the max number of files to download (default: 12)",
 )
 
+parser.add_argument("--videos", action="store_true",help="Download videos (default is to just download the video thumbnail)")
+parser.add_argument("-a", "--all", action="store_true",help="Download entire feed (ignores --num-files)")
+
 args = parser.parse_args()
 
 
@@ -36,6 +39,7 @@ def main():
     global max_files, args
     if args.num_files:
         max_files = args.num_files
+    
     user = args.instagram_user
 
     pull_feed_images(user)
@@ -90,9 +94,14 @@ def get_next_page(query_hash: str, user_id: str, cursor_token: str):
 
 
 def download(media_data: dict):
+    global args
     for edge in media_data:
         node = edge["node"]
-        url = node["display_url"]
+        if node["is_video"] and args.videos:
+            url = node["video_url"]
+        else:
+            url = node["display_url"]
+        
         download_file(url)
 
         if node["__typename"] == "GraphSidecar":
@@ -102,7 +111,7 @@ def download(media_data: dict):
 
 
 def download_file(url: str):
-    global current_download_count, media_count, max_files
+    global current_download_count, media_count, max_files, args
     current_download_count += 1
     filename = get_filename(url)
     print(f"* [{current_download_count}/{media_count}] Downloading {filename}...")
@@ -110,7 +119,7 @@ def download_file(url: str):
     with open(filename, "wb") as file:
         file.write(response.content)
 
-    if current_download_count >= max_files:
+    if current_download_count >= max_files and not args.all:
         print("Done.")
         sys.exit(0)
 
