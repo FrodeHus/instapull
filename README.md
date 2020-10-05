@@ -12,7 +12,7 @@ from package: `pip3 install instapull`
 
 ## Usage
 
-```bash
+```
 usage: instapull [options] instagram-user
 
 Pull images from a Instagram feed
@@ -22,9 +22,7 @@ positional arguments:
 
 optional arguments:
   -h, --help            show this help message and exit
-  -m MAX_PAGES, --max-pages MAX_PAGES
-                        Pull a maximum number of pages (12 images per page)
-  -p PAGE_SIZE, --page-size PAGE_SIZE
-                        Set the page size for each download pass (defaults to 12)
+  -n NUM_FILES, --num-files NUM_FILES
+                        Set the max number of files to download (default: 12)
                       
 ```
