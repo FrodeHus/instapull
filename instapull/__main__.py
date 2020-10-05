@@ -9,6 +9,7 @@ current_page_count = 0
 max_pages = 0
 media_count = 0
 current_download_count = 0
+page_size = 12
 
 parser = argparse.ArgumentParser(
     prog="instapull",
@@ -26,16 +27,25 @@ parser.add_argument(
     "--max-pages",
     action="store",
     type=int,
-    help="Pull a maximum number of pages (12 images per page)",
+    help="Pull a maximum number of pages (page size can be set using -p)",
 )
 
-parser.add_argument("-p", "--page-size", type=int, action="store", help="Set the page size for each download pass (defaults to 12)")
+parser.add_argument(
+    "-p",
+    "--page-size",
+    type=int,
+    action="store",
+    help="Set the page size for each download pass (defaults to 12)",
+)
 
 args = parser.parse_args()
 
 
 def main():
-    global max_pages, args
+    global max_pages, args, page_size
+    if args.page_size:
+        page_size = args.page_size
+
     user = args.instagram_user
     if "max_pages" in args and args.max_pages:
         max_pages = args.max_pages
@@ -46,13 +56,17 @@ def main():
 def pull_feed_images(user: str):
     print(f"* Looking up {user}")
     response = requests.get(f"https://www.instagram.com/{user}/?__a=1")
+    if response.status_code is not 200:
+        print("- User was not found")
+        sys.exit(1)
+
     metadata = response.json()
     user_data = metadata["graphql"]["user"]
     print(f"* Bio: {user_data['biography']}")
     timeline_media = user_data["edge_owner_to_timeline_media"]
-    global media_count
+    global media_count, page_size
     media_count = timeline_media["count"]
-    print(f"* Found {media_count} images in timeline")
+    print(f"* Found {media_count} images in timeline - {media_count / 12:.0f} pages")
     page_info = timeline_media["page_info"]
     cursor_token = page_info["end_cursor"]
     has_next_page = page_info["has_next_page"]
@@ -67,10 +81,7 @@ def pull_feed_images(user: str):
 
 def get_next_page(query_hash: str, user_id: str, cursor_token: str):
     global args
-    page_size = 12
-    if args.page_size:
-        page_size = args.page_size
-        
+
     urlparams = f'{{"id":"{user_id}","first":{page_size},"after":"{cursor_token}"}}'
     url = (
         f"https://www.instagram.com/graphql/query/?query_hash={query_hash}&variables="
