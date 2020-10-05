@@ -24,5 +24,7 @@ optional arguments:
   -h, --help            show this help message and exit
   -n NUM_FILES, --num-files NUM_FILES
                         Set the max number of files to download (default: 12)
+  --videos              Download videos (default is to just download the video thumbnail)
+  -a, --all             Download entire feed (ignores --num-files)
                       
 ```
