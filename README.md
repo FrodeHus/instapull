@@ -22,4 +22,5 @@ optional arguments:
   -h, --help            show this help message and exit
   -m MAX_PAGES, --max-pages MAX_PAGES
                         Pull a maximum number of pages (12 images per page)
-                        ```
+                      
+```
