@@ -9,7 +9,7 @@
             "type": "python",
             "request": "launch",
             "module": "instapull",
-            "args": ["frodehus", "2"]
+            "args": ["-p", "20", "-m", "2", "frodehus"]
         }
     ]
 }
