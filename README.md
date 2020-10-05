@@ -1,6 +1,8 @@
 # instapull
 Simple tool to dump images from a Instagram timeline
 
+![Upload Python Package](https://github.com/FrodeHus/instapull/workflows/Upload%20Python%20Package/badge.svg)
+
 
 ## Install
 
