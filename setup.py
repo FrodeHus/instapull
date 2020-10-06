@@ -2,7 +2,7 @@ import setuptools
 
 setuptools.setup(
     name="instapull",
-    version="0.7",
+    version="0.8",
     packages=setuptools.find_packages(),
     entry_points={"console_scripts": ["instapull=instapull.__main__:main"]},
     author="Frode Hus",
