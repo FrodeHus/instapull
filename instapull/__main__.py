@@ -4,6 +4,7 @@ import urllib.parse
 import re
 import argparse
 import sys
+import os
 
 media_count = 0
 current_download_count = 0
@@ -29,8 +30,24 @@ parser.add_argument(
     help="Set the max number of files to download (default: 12)",
 )
 
-parser.add_argument("--videos", action="store_true",help="Download videos (default is to just download the video thumbnail)")
-parser.add_argument("-a", "--all", action="store_true",help="Download entire feed (ignores --num-files)")
+parser.add_argument(
+    "--videos",
+    action="store_true",
+    help="Download videos (default is to just download the video thumbnail)",
+)
+parser.add_argument(
+    "-a",
+    "--all",
+    action="store_true",
+    help="Download entire feed (ignores --num-files)",
+)
+
+parser.add_argument(
+    "-o",
+    "--output-dir",
+    type=str,
+    help="Save downloads to specified directory (will create directory if it does not exist",
+)
 
 args = parser.parse_args()
 
@@ -39,8 +56,10 @@ def main():
     global max_files, args
     if args.num_files:
         max_files = args.num_files
-    
+
     user = args.instagram_user
+    if args.output_dir and not os.path.exists(args.output_dir):
+        os.makedirs(args.output_dir)
 
     pull_feed_images(user)
 
@@ -101,7 +120,7 @@ def download(media_data: dict):
             url = node["video_url"]
         else:
             url = node["display_url"]
-        
+
         download_file(url)
 
         if node["__typename"] == "GraphSidecar":
@@ -114,6 +133,9 @@ def download_file(url: str):
     global current_download_count, media_count, max_files, args
     current_download_count += 1
     filename = get_filename(url)
+    if args.output_dir:
+        filename = os.path.join(args.output_dir, get_filename(url))
+
     print(f"* [{current_download_count}/{media_count}] Downloading {filename}...")
     response = requests.get(url)
     with open(filename, "wb") as file:
