@@ -43,12 +43,15 @@ parser.add_argument(
     help="Download entire feed (ignores --num-files)",
 )
 
-parser.add_argument(
+group = parser.add_mutually_exclusive_group()
+group.add_argument("-c", "--create-dir", help="Create directory <instagram_user>", action="store_true")
+group.add_argument(
     "-o",
     "--output-dir",
     type=str,
     help="Save downloads to specified directory (will create directory if it does not exist",
 )
+
 
 args = parser.parse_args()
 
@@ -59,6 +62,9 @@ def main():
         max_files = args.num_files
 
     user = args.instagram_user
+    if args.create_dir and not os.path.exists(user):
+        os.makedirs(user)
+
     if args.output_dir and not os.path.exists(args.output_dir):
         os.makedirs(args.output_dir)
 
@@ -137,7 +143,11 @@ def download_file(url: str, progress):
     current_download_count += 1
     filename = get_filename(url)
     if args.output_dir:
-        filename = os.path.join(args.output_dir, get_filename(url))
+        directory = args.output_dir
+    if args.create_dir:
+        directory = args.instagram_user
+
+    filename = os.path.join(directory, get_filename(url))
 
     response = requests.get(url)
     with open(filename, "wb") as file:
