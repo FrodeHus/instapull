@@ -9,7 +9,7 @@ from alive_progress import alive_bar
 
 media_count = 0
 current_download_count = 0
-max_files = 12
+max_posts = 12
 
 parser = argparse.ArgumentParser(
     prog="instapull",
@@ -38,10 +38,10 @@ group.add_argument(
 )
 group.add_argument(
     "-n",
-    "--num-files",
+    "--num-posts",
     type=int,
     action="store",
-    help="Set the max number of files to download (default: 12)",
+    help="Set the max number of posts to download (default: 12)",
 )
 
 group = parser.add_mutually_exclusive_group()
@@ -50,7 +50,7 @@ group.add_argument(
     "-o",
     "--output-dir",
     type=str,
-    help="Save downloads to specified directory (will create directory if it does not exist",
+    help="Save downloads to specified directory (will create directory if it does not exist)",
 )
 
 
@@ -58,9 +58,9 @@ args = parser.parse_args()
 
 
 def main():
-    global max_files, args
-    if args.num_files:
-        max_files = args.num_files
+    global max_posts, args
+    if args.num_posts:
+        max_posts = args.num_posts
 
     user = args.instagram_user
     if args.create_dir and not os.path.exists(user):
@@ -78,22 +78,24 @@ def pull_feed_images(user: str):
         print("- User was not found")
         sys.exit(1)
 
-    global max_files, current_download_count
-    with alive_bar(max_files, bar='blocks') as bar:
-        metadata = response.json()
-        user_data = metadata["graphql"]["user"]
-        bar.text(f"Bio: {user_data['biography']}")
-        timeline_media = user_data["edge_owner_to_timeline_media"]
-        global media_count
-        media_count = timeline_media["count"]
-        bar.text(f"Found {media_count} images in timeline")
+    global max_posts, current_download_count
+    metadata = response.json()
+    user_data = metadata["graphql"]["user"]
+    print(f"Bio: {user_data['biography']}")
+    timeline_media = user_data["edge_owner_to_timeline_media"]
+    global media_count, args
+    media_count = timeline_media["count"]
+    if args.all:
+        max_posts = media_count
+
+    with alive_bar(max_posts, bar='blocks') as bar:
         page_info = timeline_media["page_info"]
         cursor_token = page_info["end_cursor"]
         has_next_page = page_info["has_next_page"]
         user_id = user_data["id"]
         edges = timeline_media["edges"]
         bar.text(f"Downloading feed from {user}")
-        download(edges, bar)
+        download_post(edges, bar)
 
         if has_next_page:
             query_hash = retrieve_query_hash()
@@ -116,13 +118,13 @@ def get_next_page(query_hash: str, user_id: str, cursor_token: str, progress):
     data = response.json()["data"]["user"]["edge_owner_to_timeline_media"]
     cursor_token = data["page_info"]["end_cursor"]
     has_next_page = data["page_info"]["has_next_page"]
-    download(data["edges"], progress)
+    download_post(data["edges"], progress)
 
     if has_next_page:
         get_next_page(query_hash, user_id, cursor_token, progress)
 
 
-def download(media_data: dict, progress):
+def download_post(media_data: dict, progress):
     global args
     for edge in media_data:
         node = edge["node"]
@@ -131,18 +133,20 @@ def download(media_data: dict, progress):
         else:
             url = node["display_url"]
 
-        download_file(url, progress)
+        download_file(url)
 
         if node["__typename"] == "GraphSidecar":
             # should probably group these together somehow as they are posted as a group
             sidecar_children = node["edge_sidecar_to_children"]
-            download(sidecar_children["edges"], progress)
+            download_post(sidecar_children["edges"], progress)
+        progress()
 
 
-def download_file(url: str, progress):
-    global current_download_count, media_count, max_files, args
+def download_file(url: str):
+    global current_download_count, media_count, max_posts, args
     current_download_count += 1
     filename = get_filename(url)
+    directory = ""
     if args.output_dir:
         directory = args.output_dir
     if args.create_dir:
@@ -153,8 +157,7 @@ def download_file(url: str, progress):
     response = requests.get(url)
     with open(filename, "wb") as file:
         file.write(response.content)
-    progress()
-    if current_download_count >= max_files and not args.all:
+    if current_download_count >= max_posts and not args.all:
         print("Done.")
         sys.exit(0)
 
