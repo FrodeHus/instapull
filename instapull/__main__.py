@@ -24,23 +24,24 @@ parser.add_argument(
 )
 
 parser.add_argument(
+    "--videos",
+    action="store_true",
+    help="Download videos (default is to just download the video thumbnail)",
+)
+
+group = parser.add_mutually_exclusive_group()
+group.add_argument(
+    "-a",
+    "--all",
+    action="store_true",
+    help="Download entire feed",
+)
+group.add_argument(
     "-n",
     "--num-files",
     type=int,
     action="store",
     help="Set the max number of files to download (default: 12)",
-)
-
-parser.add_argument(
-    "--videos",
-    action="store_true",
-    help="Download videos (default is to just download the video thumbnail)",
-)
-parser.add_argument(
-    "-a",
-    "--all",
-    action="store_true",
-    help="Download entire feed (ignores --num-files)",
 )
 
 group = parser.add_mutually_exclusive_group()
