@@ -22,13 +22,12 @@ positional arguments:
 
 optional arguments:
   -h, --help            show this help message and exit
+  --videos              Download videos (default is to just download the video thumbnail)
+  -a, --all             Download entire feed
   -n NUM_FILES, --num-files NUM_FILES
                         Set the max number of files to download (default: 12)
-  --videos              Download videos (default is to just download the video
-                        thumbnail)
-  -a, --all             Download entire feed (ignores --num-files)
+  -c, --create-dir      Create directory <instagram_user>
   -o OUTPUT_DIR, --output-dir OUTPUT_DIR
-                        Save downloads to specified directory (will create
-                        directory if it does not exist
+                        Save downloads to specified directory (will create directory if it does not exist)
          
 ```
