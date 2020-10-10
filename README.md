@@ -13,15 +13,14 @@ from package: `pip3 install instapull`
 ## Usage
 
 ```
-usage: instapull [options] instagram-user
+usage: instapull [-h] [-u USER | -t TAG] [--videos] [-a | -n NUM_POSTS] [-c | -o OUTPUT_DIR]
 
-Pull images from a Instagram feed
-
-positional arguments:
-  instagram_user        User name of the Instagram feed to pull images from
+Pull posts from Instagram
 
 optional arguments:
   -h, --help            show this help message and exit
+  -u USER, --user USER  User name of the Instagram feed to pull images from
+  -t TAG, --tag TAG     Download posts with this tag
   --videos              Download videos (default is to just download the video thumbnail)
   -a, --all             Download entire feed
   -n NUM_POSTS, --num-posts NUM_POSTS
