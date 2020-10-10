@@ -2,12 +2,12 @@ import setuptools
 
 setuptools.setup(
     name="instapull",
-    version="0.8.6",
+    version="0.9",
     packages=setuptools.find_packages(),
     entry_points={"console_scripts": ["instapull=instapull.__main__:main"]},
     author="Frode Hus",
     author_email="frode.hus@outlook.com",
-    description="Simple tool that lets you dump the imagestream from a Instagram user",
+    description="Simple tool that lets you dump Instagram posts by user or hashtag",
     url="https://www.frodehus.com",
     python_requires=">=3.6",
     install_requires=["requests", "argparse"],
