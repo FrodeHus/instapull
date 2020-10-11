@@ -5,8 +5,21 @@ class PostDownloader:
     def __init__(self, user = None, tag = None, download_directory = ""):
         self.user = user
         self.tag = tag
+        self.current_download_count = 0
+        self.total_post_count = 0
+        self.max_posts_to_download = 12
         self.download_directory = download_directory
     
+    def download_file(self, url: str):
+        self.current_download_count += 1
+        filename = self._get_filename(url)
+        response = requests.get(url)
+        self._save_file(filename, response.content)
+
+    def _save_file(self, filename : str, content : bytes):
+        with open(filename, "wb") as file:
+            file.write(content)
+
     def _get_filename(self, url: str):
         segments = url.split("/")
         filename = segments[-1]

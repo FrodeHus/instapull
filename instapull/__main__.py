@@ -200,8 +200,11 @@ def download_file(url: str):
     current_download_count += 1
     filename = get_filename(url)
     response = requests.get(url)
+    _save_file(filename, response.content)
+
+def _save_file(filename : str, content : bytes):
     with open(filename, "wb") as file:
-        file.write(response.content)
+        file.write(content)
 
 
 def retrieve_user_query_hash():

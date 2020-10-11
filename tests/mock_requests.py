@@ -1,13 +1,14 @@
-from unittest import mock
-@mock.patch('requests.get')
 def mock_instagram_api(*args, **kwargs):
     class MockResponse:
         def __init__(self, text, status_code):
             self.text = text
             self.status_code = status_code
+            self.content = 'testdata'
         
         def text(self):
             return self.text
+        def content(self):
+            return self.content
         
     if args[0] == "https://www.instagram.com":
         html = """
