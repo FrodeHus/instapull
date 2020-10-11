@@ -1,10 +1,19 @@
 import requests
 import re
+import os
 class PostDownloader:
-    def __init__(self, user = None, tag = None):
+    def __init__(self, user = None, tag = None, download_directory = ""):
         self.user = user
         self.tag = tag
+        self.download_directory = download_directory
     
+    def _get_filename(self, url: str):
+        segments = url.split("/")
+        filename = segments[-1]
+        filename = filename[: filename.index("?")]
+        filename = os.path.join(self.download_directory, filename)
+        return filename
+
     def retrieve_user_query_hash(self):
         return self._retrieve_query_hash("https://www.instagram.com", r"static\/bundles\/.+\/Consumer\.js\/.+\.js", "profilePosts.byUserId")
 

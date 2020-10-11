@@ -13,6 +13,12 @@ class RetrieveHashTest(unittest.TestCase):
         hash = downloader.retrieve_tag_query_hash()
         self.assertEquals('9b498c08113f1e09617a1703c22b2f32', hash)
 
-
+class FileTests(unittest.TestCase):
+    def test_filename_parser(self):
+        s = "https://www.dummy.me/stuff/1234/abc/file.jpg?hash=1234"
+        downloader = PostDownloader()
+        filename = downloader._get_filename(s)
+        self.assertEquals(filename, 'file.jpg')
+        
 if __name__ == "__main__":
     unittest.main()
