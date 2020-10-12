@@ -1,6 +1,8 @@
 import requests
 import re
 import os
+from .exceptions import DownloadFailed
+
 class PostDownloader:
     def __init__(self, user = None, tag = None, download_directory = ""):
         self.user = user
@@ -14,7 +16,10 @@ class PostDownloader:
         self.current_download_count += 1
         filename = self._get_filename(url)
         response = requests.get(url)
-        self._save_file(filename, response.content)
+        if response.status_code == 200:
+            self._save_file(filename, response.content)
+        else:
+            raise DownloadFailed()
 
     def _save_file(self, filename : str, content : bytes):
         with open(filename, "wb") as file:
