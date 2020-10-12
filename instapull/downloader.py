@@ -2,7 +2,7 @@ import requests
 import re
 import os
 from .exceptions import DownloadFailed
-from .post import Post
+from .classes import Post, PageInfo
 
 class PostDownloader:
     def __init__(self, download_directory = ""):
@@ -28,8 +28,15 @@ class PostDownloader:
         user_data = metadata["graphql"]["user"]
         timeline_media = user_data["edge_owner_to_timeline_media"]
         edges = timeline_media["edges"]
+        page_info = PageInfo(timeline_media["page_info"])
         posts = map(Post, edges)
-        return list(posts)
+        return {
+            "page": page_info,
+            "posts": list(posts)
+        }
+    
+    def _get_next_page(self, page_info : PageInfo):
+        raise NotImplementedError()
 
     def _download_file(self, url: str):
         self.current_download_count += 1
