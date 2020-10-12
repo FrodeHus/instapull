@@ -16,11 +16,9 @@ class PostDownloader:
 
     def download_by_user(self, user_name: str):
         self._query_hash = self._retrieve_user_query_hash()
-        self._page_id_property = "id"
 
     def download_by_tag(self, hash_tag: str):
         self._query_hash = self._retrieve_tag_query_hash()
-        self._page_id_property = "tag_name"
 
     def _load_user_feed(self, user_name: str):
         url = f"https://www.instagram.com/{user_name}/?__a=1"
@@ -39,7 +37,7 @@ class PostDownloader:
     def _get_next_page(self, id: str, page_info: PageInfo):
         url = (
             f"https://www.instagram.com/graphql/query/?query_hash={self._query_hash}&variables="
-            + self._generate_page_request(id, page_info)
+            + self._generate_page_request("id", id, page_info)
         )
 
         response = requests.get(url)
@@ -51,8 +49,8 @@ class PostDownloader:
         posts = map(Post, data["edges"])
         return {"page": page_info, "posts": list(posts)}
 
-    def _generate_page_request(self, id: str, page_info: PageInfo):
-        urlparams = f'{{"{self._page_id_property}":"{id}","first":12,"after":"{page_info.cursor}"}}'
+    def _generate_page_request(self, page_id_property : str, id: str, page_info: PageInfo):
+        urlparams = f'{{"{page_id_property}":"{id}","first":12,"after":"{page_info.cursor}"}}'
         return urllib.parse.quote(urlparams)
 
     def _download_file(self, url: str):
