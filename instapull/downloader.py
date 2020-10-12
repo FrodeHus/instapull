@@ -4,15 +4,20 @@ import os
 from .exceptions import DownloadFailed
 
 class PostDownloader:
-    def __init__(self, user = None, tag = None, download_directory = ""):
-        self.user = user
-        self.tag = tag
+    def __init__(self, download_directory = ""):
         self.current_download_count = 0
         self.total_post_count = 0
         self.max_posts_to_download = 12
         self.download_directory = download_directory
+        self.query_hash = None
     
-    def download_file(self, url: str):
+    def download_by_user(self, user_name : str):
+        self.query_hash = self._retrieve_user_query_hash()
+
+    def download_by_tag(self, hash_tag : str):
+        self.query_hash = self._retrieve_tag_query_hash()
+
+    def _download_file(self, url: str):
         self.current_download_count += 1
         filename = self._get_filename(url)
         response = requests.get(url)
@@ -32,10 +37,10 @@ class PostDownloader:
         filename = os.path.join(self.download_directory, filename)
         return filename
 
-    def retrieve_user_query_hash(self):
+    def _retrieve_user_query_hash(self):
         return self._retrieve_query_hash("https://www.instagram.com", r"static\/bundles\/.+\/Consumer\.js\/.+\.js", "profilePosts.byUserId")
 
-    def retrieve_tag_query_hash(self):
+    def _retrieve_tag_query_hash(self):
         return self._retrieve_query_hash("https://www.instagram.com/explore/tags", r"static\/bundles\/metro\/TagPageContainer\.js\/[a-z0-9]+\.js", "tagMedia.byTagName")
 
     def _retrieve_query_hash(self, url : str, bundleSearcher: str, functionName: str):

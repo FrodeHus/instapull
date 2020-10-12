@@ -181,12 +181,13 @@ def download_post(media_data: dict, progress):
         else:
             url = node["display_url"]
 
-        download_file(url)
-
         if not args.tag and node["__typename"] == "GraphSidecar":
             # should probably group these together somehow as they are posted as a group
             sidecar_children = node["edge_sidecar_to_children"]
             download_post(sidecar_children["edges"], progress)
+        else:
+            download_file(url)
+
 
         progress()
         if current_download_count >= max_posts and not args.all:
