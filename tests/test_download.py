@@ -1,6 +1,6 @@
 import unittest
 from unittest import mock
-from instapull import PostDownloader
+from instapull import PostDownloader, PageInfo
 from tests import mock_response
 
 
@@ -23,6 +23,32 @@ class DownloadTests(unittest.TestCase):
     @mock.patch('instapull.requests.get', side_effect=mock_response)
     def test_load_next_page(self, mock_get):
         download = PostDownloader()
+        download.download_by_user("frodehus")
         feed = download._load_user_feed("frodehus")
         page_info = feed["page"]
-        download._get_next_page(page_info)
+        feed_page = download._get_next_page("123", page_info)
+        self.assertIsNotNone(feed_page)
+        self.assertIn("posts", feed_page)
+        self.assertIn("page", feed_page)
+    
+    def test_generate_user_page_request(self):
+        download = PostDownloader()
+        download.download_by_user("frodehus")
+        page_info = PageInfo({
+                        "has_next_page": True,
+                        "end_cursor": "QVFEMGVEeTBjY0d1M2V1cmxmSnBNT0lPclI1MHdPTXc5RG9UU0NHcjNUWGxFU1pyNWpQVy1adEtkVGl0WGFXXzRqeXg2SHQ1VG9fZHRmazdQY0c5T2M0VQ=="
+                        })
+        expected = "%7B%22id%22%3A%22123%22%2C%22first%22%3A12%2C%22after%22%3A%22QVFEMGVEeTBjY0d1M2V1cmxmSnBNT0lPclI1MHdPTXc5RG9UU0NHcjNUWGxFU1pyNWpQVy1adEtkVGl0WGFXXzRqeXg2SHQ1VG9fZHRmazdQY0c5T2M0VQ%3D%3D%22%7D"
+        actual = download._generate_page_request("123", page_info)
+        self.assertEquals(expected, actual)
+
+    def test_generate_tag_page_request(self):
+        download = PostDownloader()
+        download.download_by_tag("instagram")
+        page_info = PageInfo({
+                        "has_next_page": True,
+                        "end_cursor": "QVFEMGVEeTBjY0d1M2V1cmxmSnBNT0lPclI1MHdPTXc5RG9UU0NHcjNUWGxFU1pyNWpQVy1adEtkVGl0WGFXXzRqeXg2SHQ1VG9fZHRmazdQY0c5T2M0VQ=="
+                        })
+        expected = "%7B%22tag_name%22%3A%22instagram%22%2C%22first%22%3A12%2C%22after%22%3A%22QVFEMGVEeTBjY0d1M2V1cmxmSnBNT0lPclI1MHdPTXc5RG9UU0NHcjNUWGxFU1pyNWpQVy1adEtkVGl0WGFXXzRqeXg2SHQ1VG9fZHRmazdQY0c5T2M0VQ%3D%3D%22%7D"
+        actual = download._generate_page_request("instagram", page_info)
+        self.assertEquals(expected, actual)

@@ -1,24 +1,28 @@
 import requests
 import re
 import os
+import urllib
 from .exceptions import DownloadFailed
 from .classes import Post, PageInfo
 
+
 class PostDownloader:
-    def __init__(self, download_directory = ""):
+    def __init__(self, download_directory=""):
         self.current_download_count = 0
         self.total_post_count = 0
         self.max_posts_to_download = 12
         self.download_directory = download_directory
-        self.query_hash = None
-    
-    def download_by_user(self, user_name : str):
-        self.query_hash = self._retrieve_user_query_hash()
+        self._query_hash = None
 
-    def download_by_tag(self, hash_tag : str):
-        self.query_hash = self._retrieve_tag_query_hash()
+    def download_by_user(self, user_name: str):
+        self._query_hash = self._retrieve_user_query_hash()
+        self._page_id_property = "id"
 
-    def _load_user_feed(self, user_name : str):
+    def download_by_tag(self, hash_tag: str):
+        self._query_hash = self._retrieve_tag_query_hash()
+        self._page_id_property = "tag_name"
+
+    def _load_user_feed(self, user_name: str):
         url = f"https://www.instagram.com/{user_name}/?__a=1"
         response = requests.get(url)
         if response.status_code != 200:
@@ -30,13 +34,26 @@ class PostDownloader:
         edges = timeline_media["edges"]
         page_info = PageInfo(timeline_media["page_info"])
         posts = map(Post, edges)
-        return {
-            "page": page_info,
-            "posts": list(posts)
-        }
-    
-    def _get_next_page(self, page_info : PageInfo):
-        raise NotImplementedError()
+        return {"page": page_info, "posts": list(posts)}
+
+    def _get_next_page(self, id: str, page_info: PageInfo):
+        url = (
+            f"https://www.instagram.com/graphql/query/?query_hash={self._query_hash}&variables="
+            + self._generate_page_request(id, page_info)
+        )
+
+        response = requests.get(url)
+        if response.status_code != 200:
+            raise DownloadFailed()
+
+        data = response.json()["data"]["user"]["edge_owner_to_timeline"]
+        page_info = PageInfo(data["page_info"])
+        posts = map(Post, data["edges"])
+        return {"page": page_info, "posts": list(posts)}
+
+    def _generate_page_request(self, id: str, page_info: PageInfo):
+        urlparams = f'{{"{self._page_id_property}":"{id}","first":12,"after":"{page_info.cursor}"}}'
+        return urllib.parse.quote(urlparams)
 
     def _download_file(self, url: str):
         self.current_download_count += 1
@@ -47,7 +64,7 @@ class PostDownloader:
         else:
             raise DownloadFailed()
 
-    def _save_file(self, filename : str, content : bytes):
+    def _save_file(self, filename: str, content: bytes):
         with open(filename, "wb") as file:
             file.write(content)
 
@@ -59,12 +76,20 @@ class PostDownloader:
         return filename
 
     def _retrieve_user_query_hash(self):
-        return self._retrieve_query_hash("https://www.instagram.com", r"static\/bundles\/.+\/Consumer\.js\/.+\.js", "profilePosts.byUserId")
+        return self._retrieve_query_hash(
+            "https://www.instagram.com",
+            r"static\/bundles\/.+\/Consumer\.js\/.+\.js",
+            "profilePosts.byUserId",
+        )
 
     def _retrieve_tag_query_hash(self):
-        return self._retrieve_query_hash("https://www.instagram.com/explore/tags", r"static\/bundles\/metro\/TagPageContainer\.js\/[a-z0-9]+\.js", "tagMedia.byTagName")
+        return self._retrieve_query_hash(
+            "https://www.instagram.com/explore/tags",
+            r"static\/bundles\/metro\/TagPageContainer\.js\/[a-z0-9]+\.js",
+            "tagMedia.byTagName",
+        )
 
-    def _retrieve_query_hash(self, url : str, bundleSearcher: str, functionName: str):
+    def _retrieve_query_hash(self, url: str, bundleSearcher: str, functionName: str):
         response = requests.get(url)
         html = response.text
         scripts = re.findall(bundleSearcher, html)
