@@ -2,6 +2,7 @@ import requests
 import re
 import os
 from .exceptions import DownloadFailed
+from .post import Post
 
 class PostDownloader:
     def __init__(self, download_directory = ""):
@@ -16,6 +17,19 @@ class PostDownloader:
 
     def download_by_tag(self, hash_tag : str):
         self.query_hash = self._retrieve_tag_query_hash()
+
+    def _load_user_feed(self, user_name : str):
+        url = f"https://www.instagram.com/{user_name}/?__a=1"
+        response = requests.get(url)
+        if response.status_code != 200:
+            raise DownloadFailed()
+
+        metadata = response.json()
+        user_data = metadata["graphql"]["user"]
+        timeline_media = user_data["edge_owner_to_timeline_media"]
+        edges = timeline_media["edges"]
+        posts = map(Post, edges)
+        return list(posts)
 
     def _download_file(self, url: str):
         self.current_download_count += 1

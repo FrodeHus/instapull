@@ -1,3 +1,5 @@
+import json
+
 class MockResponse:
     def __init__(self, text, status_code):
         self.text = text
@@ -8,3 +10,5 @@ class MockResponse:
         return self.text
     def content(self):
         return self.content
+    def json(self):
+        return json.loads(self.text)
