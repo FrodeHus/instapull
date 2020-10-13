@@ -5,7 +5,7 @@ import re
 import os
 import urllib
 from .exceptions import DownloadFailed
-from .classes import DownloadType, Post, PageInfo
+from .classes import DownloadType, Post, PageInfo, UserDownload
 
 def callback(downloadedPost : Post):
     pass
@@ -19,17 +19,17 @@ class PostDownloader:
         self._query_hash = None
 
     def download_by_user(self, user_name: str, max_posts: int = 12, callback = None):
-        feed = self._load_user_feed(user_name)
+        type = UserDownload()
+        feed = self._load_feed(user_name, type)
         page = feed["page"]
         posts = feed["posts"]
         id = feed["id"]
-        query_hash = self._retrieve_user_query_hash()
-        self._download_posts(id, posts, page, query_hash, max_posts, callback)
+        self._download_posts(id, posts, page, type, max_posts, callback)
 
     def download_by_tag(self, hash_tag: str, max_posts: int = 12, callback = None):
         self._query_hash = self._retrieve_tag_query_hash()
 
-    def _download_posts(self, id: str, posts: list, page_info: PageInfo, query_hash : str, max_posts : int, callback = None):
+    def _download_posts(self, id: str, posts: list, page_info: PageInfo, type : DownloadType, max_posts : int, callback = None):
         for post in posts:
             try:
                 if post.is_media_collection:
@@ -44,10 +44,10 @@ class PostDownloader:
                 sys.exit(1)
 
         if page_info.has_next_page:
-            feed = self._get_next_page(id, page_info, query_hash)
+            feed = self._get_next_page(id, page_info, type.query_hash)
             page_info = feed["page"]
             posts = feed["posts"]
-            self._download_posts(id, posts, page_info, query_hash, max_posts, callback)
+            self._download_posts(id, posts, page_info, type, max_posts, callback)
 
     def _load_feed(self, identifier : str, type : DownloadType):
         url = type.feed_url.format(identifier)
@@ -106,26 +106,3 @@ class PostDownloader:
         filename = os.path.join(self.download_directory, filename)
         return filename
 
-    def _retrieve_user_query_hash(self):
-        return self._retrieve_query_hash(
-            "https://www.instagram.com",
-            r"static\/bundles\/.+\/Consumer\.js\/.+\.js",
-            "profilePosts.byUserId",
-        )
-
-    def _retrieve_tag_query_hash(self):
-        return self._retrieve_query_hash(
-            "https://www.instagram.com/explore/tags",
-            r"static\/bundles\/metro\/TagPageContainer\.js\/[a-z0-9]+\.js",
-            "tagMedia.byTagName",
-        )
-
-    def _retrieve_query_hash(self, url: str, bundleSearcher: str, functionName: str):
-        response = requests.get(url)
-        html = response.text
-        scripts = re.findall(bundleSearcher, html)
-        response = requests.get(f"https://www.instagram.com/{scripts[0]}")
-        js = response.text
-        js = js[js.index(f"{functionName}.get") :]
-        match = re.findall(r"([a-fA-F\d]{32})", js)
-        return match[0]

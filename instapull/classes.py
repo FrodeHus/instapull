@@ -1,5 +1,6 @@
 from requests.api import post
-
+import re
+import requests
 
 class Post:
     def __init__(self, data : dict):
@@ -24,11 +25,38 @@ class DownloadType:
         self.post_property = post_property
         self.metadata_property = metadata_property
         self.feed_url = feed_url
+        self.query_hash = None
+
+    def _retrieve_user_query_hash(self):
+        return self._retrieve_query_hash(
+            "https://www.instagram.com",
+            r"static\/bundles\/.+\/Consumer\.js\/.+\.js",
+            "profilePosts.byUserId",
+        )
+
+    def _retrieve_tag_query_hash(self):
+        return self._retrieve_query_hash(
+            "https://www.instagram.com/explore/tags",
+            r"static\/bundles\/metro\/TagPageContainer\.js\/[a-z0-9]+\.js",
+            "tagMedia.byTagName",
+        )
+
+    def _retrieve_query_hash(self, url: str, bundleSearcher: str, functionName: str):
+        response = requests.get(url)
+        html = response.text
+        scripts = re.findall(bundleSearcher, html)
+        response = requests.get(f"https://www.instagram.com/{scripts[0]}")
+        js = response.text
+        js = js[js.index(f"{functionName}.get") :]
+        match = re.findall(r"([a-fA-F\d]{32})", js)
+        return match[0]
 
 class TagDownload(DownloadType):
     def __init__(self) -> None:
         super().__init__("tag_name", "edge_hashtag_to_media", "hashtag", "https://www.instagram.com/explore/tags/{}/?__a=1")
+        self.query_hash = self._retrieve_tag_query_hash()
 
 class UserDownload(DownloadType):
     def __init__(self) -> None:
         super().__init__("id", "edge_owner_to_timeline_media", "user", "https://www.instagram.com/{}/?__a=1")
+        self.query_hash = self._retrieve_user_query_hash()        

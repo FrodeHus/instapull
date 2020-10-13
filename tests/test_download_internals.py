@@ -1,3 +1,4 @@
+from instapull.classes import TagDownload, UserDownload
 import unittest
 from unittest import mock
 from instapull import PostDownloader
@@ -6,14 +7,12 @@ from tests import mock_response
 @mock.patch('instapull.requests.get', side_effect=mock_response)
 class RetrieveHashTest(unittest.TestCase):
     def test_retrieve_user_query_hash(self, mock_get):
-        downloader = PostDownloader()
-        hash = downloader._retrieve_user_query_hash()
-        self.assertEquals('56a7068fea504063273cc2120ffd54f3', hash)
+        userDownload = UserDownload()
+        self.assertEquals('56a7068fea504063273cc2120ffd54f3', userDownload.query_hash)
     
     def test_retrieve_tag_query_hash(self, mock_get):
-        downloader = PostDownloader()
-        hash = downloader._retrieve_tag_query_hash()
-        self.assertEquals('9b498c08113f1e09617a1703c22b2f32', hash)
+        tagDownload = TagDownload()
+        self.assertEquals('9b498c08113f1e09617a1703c22b2f32', tagDownload.query_hash)
 
 
 @mock.patch('instapull.PostDownloader._save_file')

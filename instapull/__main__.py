@@ -96,21 +96,21 @@ def pull_feed(args):
             downloader.download_by_tag(args.tag, callback=lambda post: bar())
 
 
-def pull_tagged_posts(tag):
-    url = f"https://www.instagram.com/explore/tags/{tag}/?__a=1"
-    response = requests.get(url)
-    if response.status_code != 200:
-        print("- Target was not found")
-        sys.exit(1)
+# def pull_tagged_posts(tag):
+#     url = f"https://www.instagram.com/explore/tags/{tag}/?__a=1"
+#     response = requests.get(url)
+#     if response.status_code != 200:
+#         print("- Target was not found")
+#         sys.exit(1)
 
-    global max_posts, current_download_count
-    metadata = response.json()
-    user_data = metadata["graphql"]["hashtag"]
-    timeline_media = user_data["edge_hashtag_to_media"]
-    global media_count
-    media_count = get_post_count(timeline_media)
+#     global max_posts, current_download_count
+#     metadata = response.json()
+#     user_data = metadata["graphql"]["hashtag"]
+#     timeline_media = user_data["edge_hashtag_to_media"]
+#     global media_count
+#     media_count = get_post_count(timeline_media)
 
-    pull_posts(tag, timeline_media)
+#     pull_posts(tag, timeline_media)
 
 
 
