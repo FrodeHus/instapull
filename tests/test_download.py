@@ -22,10 +22,12 @@ class DownloadTests(unittest.TestCase):
     @mock.patch('instapull.requests.get', side_effect=mock_response)
     def test_load_next_page(self, mock_get):
         download = PostDownloader()
-        download.download_by_user("frodehus")
-        feed = download._load_user_feed("frodehus")
-        page_info = feed["page"]
-        feed_page = download._get_next_page("123", page_info)
+        page_info = PageInfo({
+                "has_next_page": True,
+                "end_cursor": "QVFEMGVEeTBjY0d1M2V1cmxmSnBNT0lPclI1MHdPTXc5RG9UU0NHcjNUWGxFU1pyNWpQVy1adEtkVGl0WGFXXzRqeXg2SHQ1VG9fZHRmazdQY0c5T2M0VQ=="
+                })
+        query_hash = "56a7068fea504063273cc2120ffd54f3"
+        feed_page = download._get_next_page("123", page_info, query_hash)
         self.assertIsNotNone(feed_page)
         self.assertIn("posts", feed_page)
         self.assertIn("page", feed_page)

@@ -1,3 +1,5 @@
+import sys
+from alive_progress.core.progress import alive_bar
 import requests
 import re
 import os
@@ -5,6 +7,8 @@ import urllib
 from .exceptions import DownloadFailed
 from .classes import Post, PageInfo
 
+def callback(downloadedPost : Post):
+    pass
 
 class PostDownloader:
     def __init__(self, download_directory=""):
@@ -14,25 +18,32 @@ class PostDownloader:
         self.download_directory = download_directory
         self._query_hash = None
 
-    def download_by_user(self, user_name: str, max_posts: int = 12):
-        self._query_hash = self._retrieve_user_query_hash()
+    def download_by_user(self, user_name: str, max_posts: int = 12, callback = None):
         feed = self._load_user_feed(user_name)
         page = feed["page"]
         posts = feed["posts"]
         id = feed["id"]
-        self._download_posts(id, posts, page)
+        query_hash = self._retrieve_user_query_hash()
+        self._download_posts(id, posts, page, query_hash, max_posts, callback)
 
-    def download_by_tag(self, hash_tag: str):
+    def download_by_tag(self, hash_tag: str, max_posts: int = 12, callback = None):
         self._query_hash = self._retrieve_tag_query_hash()
 
-    def _download_posts(self, id: str, posts: list, page_info: PageInfo):
+    def _download_posts(self, id: str, posts: list, page_info: PageInfo, query_hash : str, max_posts : int, callback = None):
         for post in posts:
-            self._download_file(post.display_url)
+            try:
+                self._download_file(post.display_url)
+                if(callback):
+                    callback(post)
+            except DownloadFailed as identifier:
+                print("Failed to download post")
+                sys.exit(1)
 
         if page_info.has_next_page:
-            feed = self._get_next_page(id, page)
+            feed = self._get_next_page(id, page_info, query_hash)
             page_info = feed["page"]
             posts = feed["posts"]
+            self._download_posts(id, posts, page_info, query_hash, max_posts, callback)
 
     def _load_user_feed(self, user_name: str):
         url = f"https://www.instagram.com/{user_name}/?__a=1"
@@ -48,9 +59,9 @@ class PostDownloader:
         posts = map(Post, edges)
         return {"id": user_data["id"], "page": page_info, "posts": list(posts)}
 
-    def _get_next_page(self, id: str, page_info: PageInfo):
+    def _get_next_page(self, id: str, page_info: PageInfo, query_hash : str):
         url = (
-            f"https://www.instagram.com/graphql/query/?query_hash={self._query_hash}&variables="
+            f"https://www.instagram.com/graphql/query/?query_hash={query_hash}&variables="
             + self._generate_page_request("id", id, page_info)
         )
 

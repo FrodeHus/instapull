@@ -36,7 +36,7 @@ def load_mock_responses():
         "user_feed.gz"
     )
     mock_responses[
-        "https://www.instagram.com/graphql/query/?query_hash=56a7068fea504063273cc2120ffd54f3&variables=%7B%22id%22%3A%22123%22%2C%22first%22%3A12%2C%22after%22%3A%22QVFBUU9rbXg1enZLbVJheVg4VTZ1WFdPeEhqRlgzellLejZJTkdBb1JtdktEMkh1ODZwaGFTSG12VmNFM1VwZTRnLUtvUjBOa3NLMUZlVFhHVjNWUjVrZA%3D%3D%22%7D"
+        "https://www.instagram.com/graphql/query/?query_hash=56a7068fea504063273cc2120ffd54f3&variables=%7B%22id%22%3A%22123%22%2C%22first%22%3A12%2C%22after%22%3A%22QVFEMGVEeTBjY0d1M2V1cmxmSnBNT0lPclI1MHdPTXc5RG9UU0NHcjNUWGxFU1pyNWpQVy1adEtkVGl0WGFXXzRqeXg2SHQ1VG9fZHRmazdQY0c5T2M0VQ%3D%3D%22%7D"
     ] = load_mock_data("user_feed_page.gz")
 
 

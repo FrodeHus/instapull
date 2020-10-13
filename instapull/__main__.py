@@ -86,14 +86,14 @@ def create_directory(args):
 
 
 def pull_feed(args):
-    global query_hash, download_directory
-    url = None
+    global download_directory
+    downloader = PostDownloader(download_directory=download_directory)
     if args.user:
-        downloader = PostDownloader(download_directory=download_directory)
-        downloader.download_by_user(args.user)
+        with alive_bar(max_posts, bar="blocks") as bar:
+            downloader.download_by_user(args.user, callback=lambda post: bar())
     elif args.tag:
-        query_hash = retrieve_tag_query_hash()
-        pull_tagged_posts(args.tag)
+        with alive_bar(max_posts, bar="blocks") as bar:
+            downloader.download_by_tag(args.tag, callback=lambda post: bar())
 
 
 def pull_user_posts(user):
