@@ -17,6 +17,7 @@ class PostDownloader:
         self.max_posts_to_download = 12
         self.download_directory = download_directory
         self._query_hash = None
+        self._download_count = 0
 
     def download_by_user(self, user_name: str, max_posts: int = 12, callback = None):
         type = UserDownload()
@@ -31,12 +32,16 @@ class PostDownloader:
 
     def _download_posts(self, id: str, posts: list, page_info: PageInfo, type : DownloadType, max_posts : int, callback = None):
         for post in posts:
+            if self._download_count > max_posts:
+                return
+                
             try:
                 if post.is_media_collection:
                     for media in post.media:
                         self._download_file(media.display_url)
                 else:
                     self._download_file(post.display_url)
+                self._download_count += 1
                 if(callback):
                     callback(post)
             except DownloadFailed as exc:
