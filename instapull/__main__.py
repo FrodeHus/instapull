@@ -1,3 +1,4 @@
+from instapull.classes import TagDownload
 import requests
 import json
 import urllib.parse
@@ -6,7 +7,7 @@ import argparse
 import sys
 import os
 from alive_progress import alive_bar
-from .downloader import PostDownloader
+from .downloader import HashTagFeedDownload, PostDownloader, UserFeedDownload
 
 max_posts = 12
 download_directory = ""
@@ -83,14 +84,19 @@ def create_directory(args):
 
 
 def pull_feed(args):
-    global download_directory
-    downloader = PostDownloader(download_directory=download_directory)
+    global download_directory, max_posts
     if args.user:
+        downloader = UserFeedDownload(args.user, download_directory=download_directory)
+        if args.all:
+            max_posts = downloader.post_count()
         with alive_bar(max_posts, bar="blocks") as bar:
-            downloader.download_by_user(args.user, max_posts=max_posts, callback=lambda post: bar())
+            downloader.download(max_posts, lambda post: bar())
     elif args.tag:
+        downloader = HashTagFeedDownload(args.tag, download_directory=download_directory)
+        if args.all:
+            max_posts = downloader.post_count()
         with alive_bar(max_posts, bar="blocks") as bar:
-            downloader.download_by_tag(args.tag, max_posts=max_posts, callback=lambda post: bar())
+            downloader.download(max_posts, lambda post: bar())
 
 if __name__ == "__main__":
     main()

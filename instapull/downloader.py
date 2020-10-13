@@ -19,22 +19,6 @@ class PostDownloader:
         self._query_hash = None
         self._download_count = 0
 
-    def download_by_user(self, user_name: str, max_posts: int = 12, callback = None):
-        type = UserDownload()
-        feed = self._load_feed(user_name, type)
-        page = feed["page"]
-        posts = feed["posts"]
-        id = feed["id"]
-        self._download_posts(id, posts, page, type, max_posts, callback)
-
-    def download_by_tag(self, hash_tag: str, max_posts: int = 12, callback = None):
-        type = TagDownload()
-        feed = self._load_feed(hash_tag, type)
-        page = feed["page"]
-        posts = feed["posts"]
-        id = feed["id"]
-        self._download_posts(id, posts, page, type, max_posts, callback)
-
     def _download_posts(self, id: str, posts: list, page_info: PageInfo, type : DownloadType, max_posts : int, callback = None):
         for post in posts:
             if self._download_count > max_posts:
@@ -71,7 +55,7 @@ class PostDownloader:
         edges = timeline_media["edges"]
         page_info = PageInfo(timeline_media["page_info"])
         posts = map(Post, edges)
-        return {"id": feed_data["id"], "page": page_info, "posts": list(posts)}
+        return {"id": feed_data["id"], "page": page_info, "posts": list(posts), "count": timeline_media["count"]}
 
     def _get_next_page(self, id: str, page_info: PageInfo, type : DownloadType):
         url = (
@@ -116,3 +100,37 @@ class PostDownloader:
         filename = os.path.join(self.download_directory, filename)
         return filename
 
+class UserFeedDownload(PostDownloader):
+    def __init__(self, user_name : str, download_directory : str = "") -> None:
+        super().__init__(download_directory)
+        self._user_name = user_name
+        self._download_type = UserDownload()
+
+    def post_count(self):
+        feed = self._load_feed(self._user_name, self._download_type)
+        return feed["count"]        
+
+    def download(self, max_posts: int = 12, callback = None):
+        feed = self._load_feed(self._user_name, self._download_type)
+        page = feed["page"]
+        posts = feed["posts"]
+        id = feed["id"]
+        self._download_posts(id, posts, page, self._download_type, max_posts, callback)
+
+class HashTagFeedDownload(PostDownloader):
+    def __init__(self, hash_tag : str, download_directory : str = "") -> None:
+        super().__init__(download_directory)
+        self._hash_tag = hash_tag
+        self._download_type = TagDownload()
+
+    def post_count(self):
+        feed = self._load_feed(self._hash_tag, self._download_type)
+        return feed["count"]        
+
+
+    def download(self,max_posts: int = 12, callback = None):
+        feed = self._load_feed(self._hash_tag, self._download_type)
+        page = feed["page"]
+        posts = feed["posts"]
+        id = feed["id"]
+        self._download_posts(id, posts, page, self._download_type, max_posts, callback)
