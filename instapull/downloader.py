@@ -5,7 +5,7 @@ import re
 import os
 import urllib
 from .exceptions import DownloadFailed
-from .classes import DownloadType, Post, PageInfo, UserDownload
+from .classes import DownloadType, Post, PageInfo, TagDownload, UserDownload
 
 def callback(downloadedPost : Post):
     pass
@@ -28,13 +28,18 @@ class PostDownloader:
         self._download_posts(id, posts, page, type, max_posts, callback)
 
     def download_by_tag(self, hash_tag: str, max_posts: int = 12, callback = None):
-        self._query_hash = self._retrieve_tag_query_hash()
+        type = TagDownload()
+        feed = self._load_feed(hash_tag, type)
+        page = feed["page"]
+        posts = feed["posts"]
+        id = feed["id"]
+        self._download_posts(id, posts, page, type, max_posts, callback)
 
     def _download_posts(self, id: str, posts: list, page_info: PageInfo, type : DownloadType, max_posts : int, callback = None):
         for post in posts:
             if self._download_count > max_posts:
                 return
-                
+
             try:
                 if post.is_media_collection:
                     for media in post.media:
@@ -49,7 +54,7 @@ class PostDownloader:
                 sys.exit(1)
 
         if page_info.has_next_page:
-            feed = self._get_next_page(id, page_info, type.query_hash)
+            feed = self._get_next_page(id, page_info, type)
             page_info = feed["page"]
             posts = feed["posts"]
             self._download_posts(id, posts, page_info, type, max_posts, callback)
@@ -68,9 +73,9 @@ class PostDownloader:
         posts = map(Post, edges)
         return {"id": feed_data["id"], "page": page_info, "posts": list(posts)}
 
-    def _get_next_page(self, id: str, page_info: PageInfo, query_hash : str):
+    def _get_next_page(self, id: str, page_info: PageInfo, type : DownloadType):
         url = (
-            f"https://www.instagram.com/graphql/query/?query_hash={query_hash}&variables="
+            f"https://www.instagram.com/graphql/query/?query_hash={type.query_hash}&variables="
             + self._generate_page_request("id", id, page_info)
         )
 
@@ -78,7 +83,7 @@ class PostDownloader:
         if response.status_code != 200:
             raise DownloadFailed("Failed to retrieve next page of feed")
 
-        data = response.json()["data"]["user"]["edge_owner_to_timeline_media"]
+        data = response.json()["data"][type.metadata_property][type.post_property]
         page_info = PageInfo(data["page_info"])
         posts = map(Post, data["edges"])
         return {"page": page_info, "posts": list(posts)}

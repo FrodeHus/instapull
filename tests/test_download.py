@@ -28,7 +28,8 @@ class DownloadTests(unittest.TestCase):
                 "end_cursor": "QVFEMGVEeTBjY0d1M2V1cmxmSnBNT0lPclI1MHdPTXc5RG9UU0NHcjNUWGxFU1pyNWpQVy1adEtkVGl0WGFXXzRqeXg2SHQ1VG9fZHRmazdQY0c5T2M0VQ=="
                 })
         query_hash = "56a7068fea504063273cc2120ffd54f3"
-        feed_page = download._get_next_page("123", page_info, query_hash)
+        type = UserDownload()
+        feed_page = download._get_next_page("123", page_info, type)
         self.assertIsNotNone(feed_page)
         self.assertIn("posts", feed_page)
         self.assertIn("page", feed_page)
