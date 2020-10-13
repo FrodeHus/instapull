@@ -44,13 +44,17 @@ class PostDownloader:
         if response.status_code != 200:
             raise DownloadFailed()
 
-        data = response.json()["data"]["user"]["edge_owner_to_timeline"]
+        data = response.json()["data"]["user"]["edge_owner_to_timeline_media"]
         page_info = PageInfo(data["page_info"])
         posts = map(Post, data["edges"])
         return {"page": page_info, "posts": list(posts)}
 
-    def _generate_page_request(self, page_id_property : str, id: str, page_info: PageInfo):
-        urlparams = f'{{"{page_id_property}":"{id}","first":12,"after":"{page_info.cursor}"}}'
+    def _generate_page_request(
+        self, page_id_property: str, id: str, page_info: PageInfo
+    ):
+        urlparams = (
+            f'{{"{page_id_property}":"{id}","first":12,"after":"{page_info.cursor}"}}'
+        )
         return urllib.parse.quote(urlparams)
 
     def _download_file(self, url: str):
