@@ -8,6 +8,6 @@
         "type": "python",
         "request": "launch",
         "module": "instapull",
-        "args": ["-n", "2", "-u", "frodehus"]
+        "args": ["-n", "2", "-u", "happycraftsnorway"]
     }]
 }
