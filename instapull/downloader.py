@@ -32,7 +32,11 @@ class PostDownloader:
     def _download_posts(self, id: str, posts: list, page_info: PageInfo, query_hash : str, max_posts : int, callback = None):
         for post in posts:
             try:
-                self._download_file(post.display_url)
+                if post.is_media_collection:
+                    for media in post.media:
+                        self._download_file(media.display_url)
+                else:
+                    self._download_file(post.display_url)
                 if(callback):
                     callback(post)
             except DownloadFailed as identifier:
