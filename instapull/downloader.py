@@ -5,7 +5,7 @@ import re
 import os
 import urllib
 from .exceptions import DownloadFailed
-from .classes import Post, PageInfo
+from .classes import DownloadType, Post, PageInfo
 
 def callback(downloadedPost : Post):
     pass
@@ -39,8 +39,8 @@ class PostDownloader:
                     self._download_file(post.display_url)
                 if(callback):
                     callback(post)
-            except DownloadFailed as identifier:
-                print("Failed to download post")
+            except DownloadFailed as exc:
+                print("Error: " + exc.message)
                 sys.exit(1)
 
         if page_info.has_next_page:
@@ -49,19 +49,19 @@ class PostDownloader:
             posts = feed["posts"]
             self._download_posts(id, posts, page_info, query_hash, max_posts, callback)
 
-    def _load_user_feed(self, user_name: str):
-        url = f"https://www.instagram.com/{user_name}/?__a=1"
+    def _load_feed(self, identifier : str, type : DownloadType):
+        url = type.feed_url.format(identifier)
         response = requests.get(url)
         if response.status_code != 200:
-            raise DownloadFailed()
+            raise DownloadFailed("Could not get feed - probably does not exist")
 
         metadata = response.json()
-        user_data = metadata["graphql"]["user"]
-        timeline_media = user_data["edge_owner_to_timeline_media"]
+        feed_data = metadata["graphql"][type.metadata_property]
+        timeline_media = feed_data[type.post_property]
         edges = timeline_media["edges"]
         page_info = PageInfo(timeline_media["page_info"])
         posts = map(Post, edges)
-        return {"id": user_data["id"], "page": page_info, "posts": list(posts)}
+        return {"id": feed_data["id"], "page": page_info, "posts": list(posts)}
 
     def _get_next_page(self, id: str, page_info: PageInfo, query_hash : str):
         url = (
@@ -71,7 +71,7 @@ class PostDownloader:
 
         response = requests.get(url)
         if response.status_code != 200:
-            raise DownloadFailed()
+            raise DownloadFailed("Failed to retrieve next page of feed")
 
         data = response.json()["data"]["user"]["edge_owner_to_timeline_media"]
         page_info = PageInfo(data["page_info"])
@@ -93,7 +93,7 @@ class PostDownloader:
         if response.status_code == 200:
             self._save_file(filename, response.content)
         else:
-            raise DownloadFailed()
+            raise DownloadFailed(f"Failed to download file (status code: {response.status_code})")
 
     def _save_file(self, filename: str, content: bytes):
         with open(filename, "wb") as file:

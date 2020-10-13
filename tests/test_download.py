@@ -1,3 +1,4 @@
+from instapull.classes import UserDownload
 import unittest
 from unittest import mock
 from instapull import PostDownloader, PageInfo
@@ -13,7 +14,7 @@ class DownloadTests(unittest.TestCase):
     @mock.patch('instapull.requests.get', side_effect=mock_response)
     def test_load_user_posts(self, mock_get):
         download = PostDownloader()
-        feed = download._load_user_feed("frodehus")
+        feed = download._load_feed("frodehus", UserDownload())
         self.assertIsNotNone(feed)
         self.assertIn("posts", feed)
         self.assertIn("page", feed)
