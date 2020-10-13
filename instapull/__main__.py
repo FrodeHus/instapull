@@ -6,6 +6,7 @@ import argparse
 import sys
 import os
 from alive_progress import alive_bar
+from .downloader import PostDownloader
 
 media_count = 0
 current_download_count = 0
@@ -14,8 +15,7 @@ download_directory = ""
 query_hash = None
 
 parser = argparse.ArgumentParser(
-    prog="instapull",
-    description="Pull posts from Instagram",
+    prog="instapull", description="Pull posts from Instagram",
 )
 
 group = parser.add_mutually_exclusive_group()
@@ -35,10 +35,7 @@ parser.add_argument(
 
 group = parser.add_mutually_exclusive_group()
 group.add_argument(
-    "-a",
-    "--all",
-    action="store_true",
-    help="Download entire feed",
+    "-a", "--all", action="store_true", help="Download entire feed",
 )
 group.add_argument(
     "-n",
@@ -49,7 +46,9 @@ group.add_argument(
 )
 
 group = parser.add_mutually_exclusive_group()
-group.add_argument("-c", "--create-dir", help="Create directory <instagram_user>", action="store_true")
+group.add_argument(
+    "-c", "--create-dir", help="Create directory <instagram_user>", action="store_true"
+)
 group.add_argument(
     "-o",
     "--output-dir",
@@ -69,6 +68,7 @@ def main():
     create_directory(args)
     pull_feed(args)
 
+
 def create_directory(args):
     global download_directory
 
@@ -84,15 +84,17 @@ def create_directory(args):
         os.makedirs(args.output_dir, exist_ok=True)
         download_directory = args.output_dir
 
+
 def pull_feed(args):
-    global query_hash
+    global query_hash, download_directory
     url = None
     if args.user:
-        query_hash = retrieve_user_query_hash()
-        pull_user_posts(args.user)
+        downloader = PostDownloader(download_directory=download_directory)
+        downloader.download_by_user(args.user)
     elif args.tag:
         query_hash = retrieve_tag_query_hash()
         pull_tagged_posts(args.tag)
+
 
 def pull_user_posts(user):
     url = f"https://www.instagram.com/{user}/?__a=1"
@@ -108,15 +110,16 @@ def pull_user_posts(user):
     timeline_media = user_data["edge_owner_to_timeline_media"]
     global media_count, args
     media_count = get_post_count(timeline_media)
-    
+
     pull_posts(user_data["id"], timeline_media)
+
 
 def pull_posts(identifier, timeline_media):
     global max_posts
     if args.all:
         max_posts = media_count
 
-    with alive_bar(max_posts, bar='blocks') as bar:
+    with alive_bar(max_posts, bar="blocks") as bar:
         page_info = timeline_media["page_info"]
         cursor_token = page_info["end_cursor"]
         has_next_page = page_info["has_next_page"]
@@ -125,6 +128,7 @@ def pull_posts(identifier, timeline_media):
 
         if has_next_page:
             get_next_page(identifier, cursor_token, bar)
+
 
 def pull_tagged_posts(tag):
     url = f"https://www.instagram.com/explore/tags/{tag}/?__a=1"
@@ -142,8 +146,10 @@ def pull_tagged_posts(tag):
 
     pull_posts(tag, timeline_media)
 
+
 def get_post_count(data):
     return data["count"]
+
 
 def get_next_page(identifier: str, cursor_token: str, progress):
     global args, query_hash
@@ -188,12 +194,10 @@ def download_post(media_data: dict, progress):
         else:
             download_file(url)
 
-
         progress()
         if current_download_count >= max_posts and not args.all:
             print("Done.")
             sys.exit(0)
-
 
 
 def download_file(url: str):
@@ -203,18 +207,29 @@ def download_file(url: str):
     response = requests.get(url)
     _save_file(filename, response.content)
 
-def _save_file(filename : str, content : bytes):
+
+def _save_file(filename: str, content: bytes):
     with open(filename, "wb") as file:
         file.write(content)
 
 
 def retrieve_user_query_hash():
-    return _retrieve_query_hash("https://www.instagram.com", r"static\/bundles\/.+\/Consumer\.js\/.+\.js", "profilePosts.byUserId")
+    return _retrieve_query_hash(
+        "https://www.instagram.com",
+        r"static\/bundles\/.+\/Consumer\.js\/.+\.js",
+        "profilePosts.byUserId",
+    )
+
 
 def retrieve_tag_query_hash():
-    return _retrieve_query_hash("https://www.instagram.com/explore/tags", r"static\/bundles\/metro\/TagPageContainer\.js\/[a-z0-9]+\.js", "tagMedia.byTagName")
+    return _retrieve_query_hash(
+        "https://www.instagram.com/explore/tags",
+        r"static\/bundles\/metro\/TagPageContainer\.js\/[a-z0-9]+\.js",
+        "tagMedia.byTagName",
+    )
 
-def _retrieve_query_hash(url : str, bundleSearcher: str, functionName: str):
+
+def _retrieve_query_hash(url: str, bundleSearcher: str, functionName: str):
     response = requests.get(url)
     html = response.text
     scripts = re.findall(bundleSearcher, html)
@@ -223,6 +238,7 @@ def _retrieve_query_hash(url : str, bundleSearcher: str, functionName: str):
     js = js[js.index(f"{functionName}.get") :]
     match = re.findall(r"([a-fA-F\d]{32})", js)
     return match[0]
+
 
 def get_filename(url: str):
     global download_directory

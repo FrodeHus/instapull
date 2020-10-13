@@ -14,11 +14,25 @@ class PostDownloader:
         self.download_directory = download_directory
         self._query_hash = None
 
-    def download_by_user(self, user_name: str):
+    def download_by_user(self, user_name: str, max_posts: int = 12):
         self._query_hash = self._retrieve_user_query_hash()
+        feed = self._load_user_feed(user_name)
+        page = feed["page"]
+        posts = feed["posts"]
+        id = feed["id"]
+        self._download_posts(id, posts, page)
 
     def download_by_tag(self, hash_tag: str):
         self._query_hash = self._retrieve_tag_query_hash()
+
+    def _download_posts(self, id: str, posts: list, page_info: PageInfo):
+        for post in posts:
+            self._download_file(post.display_url)
+
+        if page_info.has_next_page:
+            feed = self._get_next_page(id, page)
+            page_info = feed["page"]
+            posts = feed["posts"]
 
     def _load_user_feed(self, user_name: str):
         url = f"https://www.instagram.com/{user_name}/?__a=1"
@@ -32,7 +46,7 @@ class PostDownloader:
         edges = timeline_media["edges"]
         page_info = PageInfo(timeline_media["page_info"])
         posts = map(Post, edges)
-        return {"page": page_info, "posts": list(posts)}
+        return {"id": user_data["id"], "page": page_info, "posts": list(posts)}
 
     def _get_next_page(self, id: str, page_info: PageInfo):
         url = (
