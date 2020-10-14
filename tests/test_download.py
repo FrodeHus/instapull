@@ -42,7 +42,7 @@ class DownloadTests(unittest.TestCase):
                         })
         expected = "%7B%22id%22%3A%22123%22%2C%22first%22%3A12%2C%22after%22%3A%22QVFEMGVEeTBjY0d1M2V1cmxmSnBNT0lPclI1MHdPTXc5RG9UU0NHcjNUWGxFU1pyNWpQVy1adEtkVGl0WGFXXzRqeXg2SHQ1VG9fZHRmazdQY0c5T2M0VQ%3D%3D%22%7D"
         actual = download._generate_page_request("id", "123", page_info)
-        self.assertEquals(expected, actual)
+        self.assertEqual(expected, actual)
 
     def test_generate_tag_page_request(self):
         download = PostDownloader()
@@ -52,4 +52,4 @@ class DownloadTests(unittest.TestCase):
                         })
         expected = "%7B%22tag_name%22%3A%22instagram%22%2C%22first%22%3A12%2C%22after%22%3A%22QVFEMGVEeTBjY0d1M2V1cmxmSnBNT0lPclI1MHdPTXc5RG9UU0NHcjNUWGxFU1pyNWpQVy1adEtkVGl0WGFXXzRqeXg2SHQ1VG9fZHRmazdQY0c5T2M0VQ%3D%3D%22%7D"
         actual = download._generate_page_request("tag_name", "instagram", page_info)
-        self.assertEquals(expected, actual)
+        self.assertEqual(expected, actual)

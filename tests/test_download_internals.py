@@ -8,11 +8,11 @@ from tests import mock_response
 class RetrieveHashTest(unittest.TestCase):
     def test_retrieve_user_query_hash(self, mock_get):
         userDownload = UserDownload()
-        self.assertEquals('56a7068fea504063273cc2120ffd54f3', userDownload.query_hash)
+        self.assertEqual('56a7068fea504063273cc2120ffd54f3', userDownload.query_hash)
     
     def test_retrieve_tag_query_hash(self, mock_get):
         tagDownload = TagDownload()
-        self.assertEquals('9b498c08113f1e09617a1703c22b2f32', tagDownload.query_hash)
+        self.assertEqual('9b498c08113f1e09617a1703c22b2f32', tagDownload.query_hash)
 
 
 @mock.patch('instapull.PostDownloader._save_file')
@@ -22,7 +22,7 @@ class FileTests(unittest.TestCase):
         s = "https://www.dummy.me/stuff/1234/abc/file.jpg?hash=1234"
         downloader = PostDownloader()
         filename = downloader._get_filename(s)
-        self.assertEquals(filename, 'file.jpg')
+        self.assertEqual(filename, 'file.jpg')
 
     def test_save(self, mock_get, mock_save):
         downloader = PostDownloader()
