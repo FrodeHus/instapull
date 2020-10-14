@@ -1,7 +1,5 @@
 import sys
-from alive_progress.core.progress import alive_bar
 import requests
-import re
 import os
 import urllib
 from .exceptions import DownloadFailed
@@ -60,12 +58,12 @@ class PostDownloader:
     def _get_next_page(self, id: str, page_info: PageInfo, type : DownloadType):
         url = (
             f"https://www.instagram.com/graphql/query/?query_hash={type.query_hash}&variables="
-            + self._generate_page_request("id", id, page_info)
+            + self._generate_page_request(type.page_id_property, id, page_info)
         )
 
         response = requests.get(url)
         if response.status_code != 200:
-            raise DownloadFailed("Failed to retrieve next page of feed")
+            raise DownloadFailed(f"Failed to retrieve next page of feed: {response.status_code} - {response.reason}")
 
         data = response.json()["data"][type.metadata_property][type.post_property]
         page_info = PageInfo(data["page_info"])
@@ -112,6 +110,8 @@ class UserFeedDownload(PostDownloader):
 
     def download(self, max_posts: int = 12, callback = None):
         feed = self._load_feed(self._user_name, self._download_type)
+        if max_posts > feed["count"]:
+            max_posts = feed["count"]
         page = feed["page"]
         posts = feed["posts"]
         id = feed["id"]
@@ -130,7 +130,8 @@ class HashTagFeedDownload(PostDownloader):
 
     def download(self,max_posts: int = 12, callback = None):
         feed = self._load_feed(self._hash_tag, self._download_type)
+        if max_posts > feed["count"]:
+            max_posts = feed["count"]
         page = feed["page"]
-        posts = feed["posts"]
-        id = feed["id"]
-        self._download_posts(id, posts, page, self._download_type, max_posts, callback)
+        posts = feed["posts"]        
+        self._download_posts(self._hash_tag, posts, page, self._download_type, max_posts, callback)
